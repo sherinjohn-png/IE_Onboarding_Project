@@ -312,7 +312,8 @@ export default {
       this.trendImageError = false;
 
       try {
-        const response = await axios.get(`http://localhost:3001/api/uv/${lat}/${lng}`);
+        //const response = await axios.get(`http://localhost:3001/api/uv/${lat}/${lng}`);
+        const response = await axios.get(`http://backendapi2.russellzhou624.workers.dev:3001/api/uv/${lat}/${lng}`);
         this.uvIndex = Math.round(response.data.uvIndex); // 转成整数
         
         // 设置UV危险等级和解释文本
