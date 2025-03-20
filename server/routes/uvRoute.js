@@ -2,8 +2,8 @@ import express from 'express';
 import axios from 'axios';
 
 const router = express.Router();
+const https = require('https');
 
-// API Key 直接写死，暂时不使用 .env
 const VITE_UV_API_KEY = 'openuv-11cnu4rm879yhg7-io';
 
 router.get('/uv/:lat/:lng', async (req, res) => {
