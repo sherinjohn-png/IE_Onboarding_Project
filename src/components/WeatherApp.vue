@@ -346,7 +346,8 @@ export default {
 
       try {
         //const response = await axios.get(`http://localhost:3001/api/uv/${lat}/${lng}`);
-        const response = await axios.get(`http://13.238.4.76:3001/api/uv/${lat}/${lng}`);
+        //const response = await axios.get(`http://13.238.4.76:3001/api/uv/${lat}/${lng}`);
+        const response = await axios.get(`https://ie-onboarding-project.onrender.com/api/uv/${lat}/${lng}`);
         this.uvIndex = Math.round(response.data.uvIndex); // 转成整数
         
         // 如果后端API支持返回州信息，则可以从返回值中获取
