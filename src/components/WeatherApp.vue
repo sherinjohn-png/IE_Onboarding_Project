@@ -198,6 +198,7 @@
 
 <script>
 import axios from 'axios';
+import moment from 'moment-timezone';
 
 export default {
   name: 'WeatherApp',
@@ -215,15 +216,15 @@ export default {
         city: 'Melbourne',
       },
       locations: [
-        { name: 'Melbourne', lat: -37.81, lng: 144.96, state: 'VIC' },
-        { name: 'Sydney', lat: -33.86, lng: 151.20, state: 'NSW' },
-        { name: 'Brisbane', lat: -27.46, lng: 153.02, state: 'QLD' },
-        { name: 'Perth', lat: -31.95, lng: 115.86, state: 'WA' },
-        { name: 'Adelaide', lat: -34.55, lng: 138.36, state: 'SA' },
-        { name: 'Canberra', lat: -35.28, lng: 149.13, state: 'ACT' },
-        { name: 'Newcastle', lat: -32.93, lng: 151.78, state: 'NSW' },
-        { name: 'Darwin', lat: -12.46, lng: 130.84, state: 'NT' },
-        { name: 'Gold Coast', lat: -28.02, lng: 153.43, state: 'QLD' }
+        { name: 'Melbourne', lat: -37.81, lng: 144.96, state: 'VIC', timezone: 'Australia/Melbourne' },
+        { name: 'Sydney', lat: -33.86, lng: 151.20, state: 'NSW', timezone: 'Australia/Sydney' },
+        { name: 'Brisbane', lat: -27.46, lng: 153.02, state: 'QLD', timezone: 'Australia/Brisbane' },
+        { name: 'Perth', lat: -31.95, lng: 115.86, state: 'WA', timezone: 'Australia/Perth' },
+        { name: 'Adelaide', lat: -34.55, lng: 138.36, state: 'SA', timezone: 'Australia/Adelaide' },
+        { name: 'Canberra', lat: -35.28, lng: 149.13, state: 'ACT', timezone: 'Australia/Canberra' },
+        { name: 'Newcastle', lat: -32.93, lng: 151.78, state: 'NSW', timezone: 'Australia/Sydney' },
+        { name: 'Darwin', lat: -12.46, lng: 130.84, state: 'NT', timezone: 'Australia/Darwin' },
+        { name: 'Gold Coast', lat: -28.02, lng: 153.43, state: 'QLD', timezone: 'Australia/Brisbane' }
       ],
       
       // 防晒霜提醒相关数据
@@ -307,19 +308,31 @@ export default {
     }
   },
   methods: {
-    updateDateTime() {
-      const now = new Date();
+  updateDateTime() {
+    const now = new Date();
+    
+    if (this.selectedLocation && this.selectedLocation.timezone) {
+      // 使用moment-timezone根据所选城市的时区格式化时间
+      const cityTime = moment().tz(this.selectedLocation.timezone);
+      this.currentTime = cityTime.format('HH:mm');
+      this.currentDate = cityTime.format('dddd DD MMM');
+    } else {
+      // 如果没有选择城市或城市没有时区信息，则使用本地时间
       this.currentTime = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
       this.currentDate = now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
-    },
+    }
+  },
     
-    selectLocation(location) {
-      this.selectedLocation = location;
-      this.selectedState = location.state; // 更新选择的州
-      this.searchQuery = '';
-      this.fetchUVIndex();
-      this.cancerImageError = false; // 重置癌症图片加载错误状态
-    },
+  selectLocation(location) {
+    this.selectedLocation = location;
+    this.selectedState = location.state;
+    this.searchQuery = '';
+    this.fetchUVIndex();
+    this.cancerImageError = false;
+    
+    // 立即更新时间显示
+    this.updateDateTime();
+  },
     
     async fetchUVIndex() {
       if (!this.selectedLocation) return;
