@@ -37,7 +37,6 @@
           <div class="uv-card smaller">
             <h3>UV Index</h3>
             
-            <!-- 替换下拉框为搜索框 -->
             <div class="city-search">
               <input
                 type="text"
@@ -57,7 +56,6 @@
               </div>
             </div>
             
-            <!-- 显示选中的城市 -->
             <div v-if="selectedLocation" class="selected-city">
               Selected: {{ selectedLocation.name }}
             </div>
@@ -66,7 +64,7 @@
               {{ uvIndex !== null ? uvIndex : 'N/A' }}
             </div>
             
-            <!-- 添加防晒霜提醒功能 -->
+            
             <div class="sunscreen-reminder">
               <h3>Sunscreen Reminder</h3>
               <div class="reminder-toggle">
@@ -97,7 +95,6 @@
 
           <!-- Melbourne Time & UV Danger Level Module -->
           <div class="time-city-card larger">
-            <!-- 城市、时间和日期（横向排列） -->
             <div class="datetime-row">
               <div class="city-display">{{ weather.city }}</div>
               <div class="time-date-group">
@@ -133,13 +130,26 @@
           </div>
 
           <!-- Impact of Skin Cancer Module -->
-          <div class="info-card">
+          <div class="info-card cancer-card">
             <h3>Impact of Skin Cancer in Australia</h3>
-            <p>Australia has one of the highest rates of skin cancer in the world. 2 in 3 Australians will be diagnosed with skin cancer by the age of 70.</p>
+            <div class="cancer-content">
+              <p v-if="!selectedLocation || !selectedState || cancerImageError">
+                Australia has one of the highest rates of skin cancer in the world. 2 in 3 Australians will be diagnosed with skin cancer by the age of 70.
+              </p>
+              <div v-else-if="selectedLocation && selectedState" class="cancer-image-container">
+                <img :src="cancerImageUrl" alt="Cancer statistics" class="cancer-image" @error="handleCancerImageError" @click="showLargeCancerImage"/>
+              </div>
+              <div v-if="showFullCancerImage" class="image-modal" @click="showFullCancerImage = false">
+                <div class="modal-content">
+                  <img :src="cancerImageUrl" :alt="`${selectedState} cancer statistics`" class="full-size-image" />
+                </div>
+              </div>
+              <p class="trend-description">Cancer Data Visualisation</p>
+            </div>
           </div>
 
           <!-- Rising Temperature Trend Module -->
-          <div class="info-card">
+          <div class="info-card trend-card">
             <h3>Trend of rising temperatures over time</h3>
             <div class="temperature-trend-content">
               <p v-if="!selectedLocation">Select a location to view temperature trends.</p>
@@ -196,7 +206,8 @@ export default {
       searchQuery: '',
       currentTime: '',
       currentDate: '',
-      selectedLocation: '',
+      selectedLocation: null,
+      selectedState: null, // 新增：当前选择的州
       uvIndex: null,
       uvDangerLevel: 'N/A',
       uvExplanation: '',
@@ -204,15 +215,15 @@ export default {
         city: 'Melbourne',
       },
       locations: [
-        { name: 'Melbourne', lat: -37.81, lng: 144.96 },
-        { name: 'Sydney', lat: -33.86, lng: 151.20 },
-        { name: 'Brisbane', lat: -27.46, lng: 153.02 },
-        { name: 'Perth', lat: -31.95, lng: 115.86 },
-        { name: 'Adelaide', lat: -34.55, lng: 138.36 },
-        { name: 'Canberra', lat: -35.28, lng: 149.13 },
-        { name: 'Newcastle', lat: -32.93, lng: 151.78 },
-        { name: 'Darwin', lat: -12.46, lng: 130.84 },
-        { name: 'Gold Coast', lat: -28.02, lng: 153.43 }
+        { name: 'Melbourne', lat: -37.81, lng: 144.96, state: 'VIC' },
+        { name: 'Sydney', lat: -33.86, lng: 151.20, state: 'NSW' },
+        { name: 'Brisbane', lat: -27.46, lng: 153.02, state: 'QLD' },
+        { name: 'Perth', lat: -31.95, lng: 115.86, state: 'WA' },
+        { name: 'Adelaide', lat: -34.55, lng: 138.36, state: 'SA' },
+        { name: 'Canberra', lat: -35.28, lng: 149.13, state: 'ACT' },
+        { name: 'Newcastle', lat: -32.93, lng: 151.78, state: 'NSW' },
+        { name: 'Darwin', lat: -12.46, lng: 130.84, state: 'NT' },
+        { name: 'Gold Coast', lat: -28.02, lng: 153.43, state: 'QLD' }
       ],
       
       // 防晒霜提醒相关数据
@@ -224,25 +235,28 @@ export default {
       // 温度趋势图相关数据
       loadingTrendImage: false,
       trendImageError: false,
-
-      showFullImage: false
+      
+      // 癌症图片相关数据
+      cancerImageError: false,
+      
+      // 模态框相关数据
+      showFullImage: false,
+      showFullCancerImage: false
     };
   },
   mounted() {
     this.updateDateTime();
     setInterval(this.updateDateTime, 1000);
     
-    // 默认选择墨尔本
     if (this.locations.length > 0) {
       this.selectedLocation = this.locations[0];
+      this.selectedState = this.locations[0].state; // 默认选择第一个位置的州
       this.fetchUVIndex();
     }
     
-    // 加载保存的提醒设置
     this.loadReminderSettings();
   },
   beforeUnmount() {
-    // 清除所有提醒计时器
     this.clearReminders();
   },
   computed: {
@@ -250,12 +264,11 @@ export default {
     markerPosition() {
       if (this.uvIndex === null) return { left: '0%' };
       // 根据UV指数范围定位marker位置
-      const maxUV = 12; // 最大UV值
+      const maxUV = 12;
       const position = Math.min((this.uvIndex / maxUV) * 100, 100);
       return { left: `${position}%` };
     },
     
-    // 建议提醒间隔
     suggestedInterval() {
       if (this.uvIndex === null) return 120;
       
@@ -275,6 +288,14 @@ export default {
       return `/images/temperature-trends/${locationName}.png`;
     },
     
+    // 皮肤癌数据图片URL
+    cancerImageUrl() {
+      if (!this.selectedState) return '';
+      
+      // 根据选择的州确定图片URL
+      return `/images/cancer/cancer_${this.selectedState}.png`;
+    },
+    
     // 过滤城市列表
     filteredLocations() {
       if (!this.searchQuery) return [];
@@ -282,7 +303,7 @@ export default {
       const query = this.searchQuery.toLowerCase();
       return this.locations.filter(location => 
         location.name.toLowerCase().includes(query)
-      ).slice(0, 5); // 最多显示5个结果
+      ).slice(0, 5);
     }
   },
   methods: {
@@ -292,11 +313,12 @@ export default {
       this.currentDate = now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
     },
     
-    // 选择城市的方法
     selectLocation(location) {
       this.selectedLocation = location;
-      this.searchQuery = ''; // 清空搜索框
-      this.fetchUVIndex(); // 获取所选城市的UV指数
+      this.selectedState = location.state; // 更新选择的州
+      this.searchQuery = '';
+      this.fetchUVIndex();
+      this.cancerImageError = false; // 重置癌症图片加载错误状态
     },
     
     async fetchUVIndex() {
@@ -304,24 +326,23 @@ export default {
 
       const { lat, lng } = this.selectedLocation;
       
-      // 更新城市名称
       this.weather.city = this.selectedLocation.name;
       
-      // 重置温度趋势图状态
       this.loadingTrendImage = true;
       this.trendImageError = false;
 
       try {
         //const response = await axios.get(`http://localhost:3001/api/uv/${lat}/${lng}`);
-        const response = await axios.get(`http://backendapi2.russellzhou624.workers.dev:3001/api/uv/${lat}/${lng}`);
+        const response = await axios.get(`http://13.238.4.76:3001/api/uv/${lat}/${lng}`);
         this.uvIndex = Math.round(response.data.uvIndex); // 转成整数
         
-        // 设置UV危险等级和解释文本
+        // 如果后端API支持返回州信息，则可以从返回值中获取
+        // this.selectedState = response.data.state; 
+        
         this.setUVInfo();
         
         // 根据最新UV指数调整提醒间隔
         if (this.sunscreenReminderEnabled) {
-          // 如果UV指数变化较大，提示用户是否更新提醒间隔
           const suggested = this.suggestedInterval;
           if (Math.abs(this.reminderInterval - suggested) >= 60) {
             if (confirm(`UV index is now ${this.uvIndex}. Would you like to update your reminder interval to ${suggested/60} hour(s)?`)) {
@@ -331,7 +352,6 @@ export default {
           }
         }
         
-        // 图片加载完成
         this.loadingTrendImage = false;
         
         console.log(`UV Index for ${this.selectedLocation.name}: ${this.uvIndex}`);
@@ -343,6 +363,7 @@ export default {
         this.loadingTrendImage = false;
       }
     },
+    
     setUVInfo() {
       if (this.uvIndex === null) {
         this.uvDangerLevel = 'N/A';
@@ -365,26 +386,35 @@ export default {
       }
     },
 
+    // 显示大图
     showLargeImage() {
       this.showFullImage = true;
     },
     
+    // 显示癌症大图
+    showLargeCancerImage() {
+      this.showFullCancerImage = true;
+    },
+    
     searchCity() {
-      // 已经实现通过搜索框和结果列表
       console.log('Searching for:', this.searchQuery);
     },
+    
     useCurrentLocation() {
-      // 待实现: 获取当前位置功能
       console.log('Getting current location');
     },
     
-    // 温度趋势图相关方法
     handleImageError() {
       this.trendImageError = true;
       console.error(`Failed to load temperature trend image for ${this.selectedLocation.name}`);
     },
     
-    // 防晒霜提醒相关方法
+    // 处理癌症图片加载错误
+    handleCancerImageError() {
+      this.cancerImageError = true;
+      console.error(`Failed to load cancer image for state ${this.selectedState}`);
+    },
+    
     handleReminderToggle() {
       if (this.sunscreenReminderEnabled) {
         this.startReminder();
@@ -395,17 +425,14 @@ export default {
     },
     
     startReminder() {
-      // 清除现有提醒
       this.clearReminders();
       
-      // 计算下次提醒时间
       const now = new Date();
       this.nextReminderTime = new Date(now.getTime() + this.reminderInterval * 60000);
       
-      // 设置新提醒
       this.reminderId = setTimeout(() => {
         this.showReminder();
-        this.resetReminder(); // 安排下一次提醒
+        this.resetReminder();
       }, this.reminderInterval * 60000);
       
       console.log(`Reminder set for ${this.formatReminderTime(this.nextReminderTime)}`);
@@ -736,7 +763,7 @@ export default {
 /* 主体模块样式 */
 .content {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr; /* 调整左右列的比例 */
+  grid-template-columns: 1fr 1fr; /* 修改为相同宽度的两列 */
   gap: 40px;
   padding: 40px;
 }
@@ -823,6 +850,54 @@ export default {
   margin-top: 15px;
   font-size: 16px;
   line-height: 1.5;
+}
+
+/* 癌症卡片和趋势卡片对称样式 */
+.cancer-card, .trend-card {
+  background-color: #f3f4f6;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px #ffffff;
+  text-align: center;
+  height: 400px; /* 固定相同高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 癌症内容样式 */
+.cancer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 300px;
+  justify-content: center;
+}
+
+/* 癌症图片容器 */
+.cancer-image-container {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+/* 癌症图片样式 */
+.cancer-image {
+  max-width: 95%;
+  max-height: 95%;
+  object-fit: contain;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.cancer-image:hover {
+  transform: scale(1.02);
 }
 
 /* 修改 UV Index 样式 - 减小高度和宽度 */
@@ -1103,6 +1178,11 @@ input:checked + .slider:before {
   
   .uv-card.smaller, .time-city-card.larger, .info-card {
     grid-column: span 1;
+  }
+  
+  .cancer-card, .trend-card {
+    height: auto;
+    min-height: 350px;
   }
   
   .hero-content h1 {
