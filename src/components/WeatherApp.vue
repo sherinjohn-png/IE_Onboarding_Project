@@ -198,7 +198,6 @@
 
 <script>
 import axios from 'axios';
-import moment from 'moment-timezone';
 
 export default {
   name: 'WeatherApp',
@@ -308,20 +307,34 @@ export default {
     }
   },
   methods: {
-  updateDateTime() {
-    const now = new Date();
+    updateDateTime() {
+      const now = new Date();
+  
+      if (this.selectedLocation && this.selectedLocation.timezone) {
+    // 使用内置的Intl API和toLocaleString来格式化特定时区的时间
+        const options = { timeZone: this.selectedLocation.timezone };
     
-    if (this.selectedLocation && this.selectedLocation.timezone) {
-      // 使用moment-timezone根据所选城市的时区格式化时间
-      const cityTime = moment().tz(this.selectedLocation.timezone);
-      this.currentTime = cityTime.format('HH:mm');
-      this.currentDate = cityTime.format('dddd DD MMM');
-    } else {
-      // 如果没有选择城市或城市没有时区信息，则使用本地时间
-      this.currentTime = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
-      this.currentDate = now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
-    }
-  },
+    // 时间格式化
+        this.currentTime = now.toLocaleTimeString('en-AU', { 
+          ...options,
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+    
+    // 日期格式化
+        this.currentDate = now.toLocaleDateString('en-AU', { 
+          ...options,
+          weekday: 'long', 
+          day: 'numeric', 
+          month: 'short' 
+        });
+      } else {
+    // 使用本地时间
+        this.currentTime = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
+        this.currentDate = now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
+      }
+    },
     
   selectLocation(location) {
     this.selectedLocation = location;
@@ -349,9 +362,6 @@ export default {
         //const response = await axios.get(`http://13.238.4.76:3001/api/uv/${lat}/${lng}`);
         const response = await axios.get(`https://ie-onboarding-project.onrender.com/api/uv/${lat}/${lng}`);
         this.uvIndex = Math.round(response.data.uvIndex); // 转成整数
-        
-        // 如果后端API支持返回州信息，则可以从返回值中获取
-        // this.selectedState = response.data.state; 
         
         this.setUVInfo();
         
