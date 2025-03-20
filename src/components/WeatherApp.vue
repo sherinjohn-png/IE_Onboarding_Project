@@ -223,7 +223,7 @@ export default {
         { name: 'Canberra', lat: -35.28, lng: 149.13, state: 'ACT', timezone: 'Australia/Canberra' },
         { name: 'Newcastle', lat: -32.93, lng: 151.78, state: 'NSW', timezone: 'Australia/Sydney' },
         { name: 'Darwin', lat: -12.46, lng: 130.84, state: 'NT', timezone: 'Australia/Darwin' },
-        { name: 'Gold Coast', lat: -28.02, lng: 153.43, state: 'QLD', timezone: 'Australia/Brisbane' }
+        { name: 'GoldCoast', lat: -28.02, lng: 153.43, state: 'QLD', timezone: 'Australia/Brisbane' }
       ],
       
       // 防晒霜提醒相关数据
