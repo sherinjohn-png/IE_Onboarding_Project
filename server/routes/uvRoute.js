@@ -2,7 +2,6 @@ import express from 'express';
 import axios from 'axios';
 
 const router = express.Router();
-const https = require('https');
 
 const VITE_UV_API_KEY = 'openuv-11cnu4rm879yhg7-io';
 
