@@ -207,7 +207,7 @@ export default {
       currentTime: '',
       currentDate: '',
       selectedLocation: null,
-      selectedState: null, // 新增：当前选择的州
+      selectedState: null,
       uvIndex: null,
       uvDangerLevel: 'N/A',
       uvExplanation: '',
@@ -226,20 +226,16 @@ export default {
         { name: 'GoldCoast', lat: -28.02, lng: 153.43, state: 'QLD', timezone: 'Australia/Brisbane' }
       ],
       
-      // 防晒霜提醒相关数据
       sunscreenReminderEnabled: false,
-      reminderInterval: 120, // 默认2小时提醒一次
+      reminderInterval: 120,
       nextReminderTime: null,
       reminderId: null,
       
-      // 温度趋势图相关数据
       loadingTrendImage: false,
       trendImageError: false,
       
-      // 癌症图片相关数据
       cancerImageError: false,
       
-      // 模态框相关数据
       showFullImage: false,
       showFullCancerImage: false
     };
@@ -250,7 +246,7 @@ export default {
     
     if (this.locations.length > 0) {
       this.selectedLocation = this.locations[0];
-      this.selectedState = this.locations[0].state; // 默认选择第一个位置的州
+      this.selectedState = this.locations[0].state;
       this.fetchUVIndex();
     }
     
@@ -260,10 +256,10 @@ export default {
     this.clearReminders();
   },
   computed: {
-    // 根据UV指数计算marker位置
+    
     markerPosition() {
       if (this.uvIndex === null) return { left: '0%' };
-      // 根据UV指数范围定位marker位置
+      
       const maxUV = 12;
       const position = Math.min((this.uvIndex / maxUV) * 100, 100);
       return { left: `${position}%` };
@@ -272,31 +268,26 @@ export default {
     suggestedInterval() {
       if (this.uvIndex === null) return 120;
       
-      // 根据UV指数调整建议提醒间隔
-      if (this.uvIndex >= 8) return 60;      // 极高UV，每小时提醒
-      if (this.uvIndex >= 6) return 90;      // 高UV，每1.5小时提醒
-      if (this.uvIndex >= 3) return 120;     // 中等UV，每2小时提醒
-      return 180;                            // 低UV，每3小时提醒
+      
+      if (this.uvIndex >= 8) return 60;
+      if (this.uvIndex >= 6) return 90;
+      if (this.uvIndex >= 3) return 120;
+      return 180;
     },
     
-    // 温度趋势图URL
     temperatureTrendImageUrl() {
       if (!this.selectedLocation) return '';
       
-      // 根据选择的位置确定图片URL
       const locationName = this.selectedLocation.name.toLowerCase().replace(/\s+/g, '-');
       return `/images/temperature-trends/${locationName}.png`;
     },
     
-    // 皮肤癌数据图片URL
     cancerImageUrl() {
       if (!this.selectedState) return '';
       
-      // 根据选择的州确定图片URL
       return `/images/cancer/cancer_${this.selectedState}.png`;
     },
-    
-    // 过滤城市列表
+
     filteredLocations() {
       if (!this.searchQuery) return [];
       
@@ -311,10 +302,8 @@ export default {
       const now = new Date();
   
       if (this.selectedLocation && this.selectedLocation.timezone) {
-    // 使用内置的Intl API和toLocaleString来格式化特定时区的时间
         const options = { timeZone: this.selectedLocation.timezone };
     
-    // 时间格式化
         this.currentTime = now.toLocaleTimeString('en-AU', { 
           ...options,
           hour: '2-digit', 
@@ -322,7 +311,6 @@ export default {
           hour12: false 
         });
     
-    // 日期格式化
         this.currentDate = now.toLocaleDateString('en-AU', { 
           ...options,
           weekday: 'long', 
@@ -330,7 +318,6 @@ export default {
           month: 'short' 
         });
       } else {
-    // 使用本地时间
         this.currentTime = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
         this.currentDate = now.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
       }
@@ -342,8 +329,6 @@ export default {
     this.searchQuery = '';
     this.fetchUVIndex();
     this.cancerImageError = false;
-    
-    // 立即更新时间显示
     this.updateDateTime();
   },
     
@@ -365,7 +350,6 @@ export default {
         
         this.setUVInfo();
         
-        // 根据最新UV指数调整提醒间隔
         if (this.sunscreenReminderEnabled) {
           const suggested = this.suggestedInterval;
           if (Math.abs(this.reminderInterval - suggested) >= 60) {
@@ -410,12 +394,10 @@ export default {
       }
     },
 
-    // 显示大图
     showLargeImage() {
       this.showFullImage = true;
     },
     
-    // 显示癌症大图
     showLargeCancerImage() {
       this.showFullCancerImage = true;
     },
@@ -433,7 +415,6 @@ export default {
       console.error(`Failed to load temperature trend image for ${this.selectedLocation.name}`);
     },
     
-    // 处理癌症图片加载错误
     handleCancerImageError() {
       this.cancerImageError = true;
       console.error(`Failed to load cancer image for state ${this.selectedState}`);
@@ -476,10 +457,8 @@ export default {
     },
     
     showReminder() {
-      // 在页面上显示提醒
       alert(`Time to reapply sunscreen! Current UV Index is ${this.uvIndex}.`);
       
-      // 如果浏览器支持通知，尝试发送通知
       if ('Notification' in window) {
         if (Notification.permission === 'granted') {
           this.sendNotification();
@@ -538,14 +517,12 @@ export default {
 </script>
 
 <style scoped>
-/* 全局样式 */
 .website-container {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
   line-height: 1.6;
 }
 
-/* 导航栏样式 */
 .main-header {
   background-color: #ffffff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -564,7 +541,6 @@ export default {
   height: 80px;
 }
 
-/* 增强 logo-section 样式 */
 .logo-section {
   display: flex;
   align-items: center;
@@ -572,18 +548,18 @@ export default {
 }
 
 .logo-icon {
-  font-size: 42px; /* 增加图标大小 */
+  font-size: 42px;
   margin-right: 15px;
-  color: #ff9800; /* 更改为橙色，表示阳光 */
+  color: #ff9800;
 }
 
 .logo-section h1 {
-  font-size: 32px; /* 增加字体大小 */
-  font-weight: 700; /* 增加字体粗细 */
+  font-size: 32px;
+  font-weight: 700;
   color: #4a90e2;
   margin: 0;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* 添加微妙阴影 */
-  letter-spacing: 0.5px; /* 增加字母间距 */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
 }
 
 .main-navigation ul {
@@ -624,7 +600,6 @@ export default {
   left: 0;
 }
 
-/* 英雄区域样式 */
 .hero-section {
   position: relative;
   height: 500px;
@@ -687,7 +662,6 @@ export default {
   background-color: #3a7bca;
 }
 
-/* 主要内容区域 */
 .main-content {
   max-width: 1600px;
   margin: 0 auto;
@@ -709,7 +683,6 @@ export default {
   color: #666;
 }
 
-/* 原有天气应用样式 */
 .weather-app {
   max-width: 1600px; 
   margin: 0 auto;
@@ -719,7 +692,6 @@ export default {
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* 页脚样式 */
 .main-footer {
   background-color: #333;
   color: #fff;
@@ -784,10 +756,9 @@ export default {
   font-size: 14px;
 }
 
-/* 主体模块样式 */
 .content {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 修改为相同宽度的两列 */
+  grid-template-columns: 1fr 1fr;
   gap: 40px;
   padding: 40px;
 }
@@ -800,12 +771,10 @@ export default {
   text-align: center;
 }
 
-/* 调整UV卡片尺寸 */
 .uv-card.smaller {
   grid-column: 1;
 }
 
-/* 调整城市时间卡片尺寸 */
 .time-city-card.larger {
   grid-column: 2;
   display: flex;
@@ -813,7 +782,6 @@ export default {
   justify-content: flex-start;
 }
 
-/* 城市、时间和日期横向布局 */
 .datetime-row {
   display: flex;
   flex-direction: column;
@@ -848,20 +816,19 @@ export default {
   margin: 0;
 }
 
-/* 信息模块样式 */
 .info-card {
   background-color: #f3f4f6;
   border-radius: 15px;
   padding: 30px;
   grid-column: span 1;
-  min-height: 200px; /* 增加高度以适应图片 */
+  min-height: 200px;
   text-align: center;
   box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px #ffffff;
   font-size: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* 更改为从顶部开始 */
+  justify-content: flex-start;
 }
 
 .info-card h3 {
@@ -876,19 +843,17 @@ export default {
   line-height: 1.5;
 }
 
-/* 癌症卡片和趋势卡片对称样式 */
 .cancer-card, .trend-card {
   background-color: #f3f4f6;
   border-radius: 15px;
   padding: 30px;
   box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1), -5px -5px 15px #ffffff;
   text-align: center;
-  height: 400px; /* 固定相同高度 */
+  height: 400px;
   display: flex;
   flex-direction: column;
 }
 
-/* 癌症内容样式 */
 .cancer-content {
   display: flex;
   flex-direction: column;
@@ -898,7 +863,6 @@ export default {
   justify-content: center;
 }
 
-/* 癌症图片容器 */
 .cancer-image-container {
   width: 100%;
   height: 220px;
@@ -911,7 +875,6 @@ export default {
   background-color: #fff;
 }
 
-/* 癌症图片样式 */
 .cancer-image {
   max-width: 95%;
   max-height: 95%;
@@ -924,30 +887,28 @@ export default {
   transform: scale(1.02);
 }
 
-/* 修改 UV Index 样式 - 减小高度和宽度 */
 .uv-display {
-  margin: 15px auto; /* 改为上下边距，自动左右居中 */
+  margin: 15px auto;
   font-size: 40px;
   font-weight: bold;
-  padding: 15px; /* 减小内边距 */
+  padding: 15px;
   border-radius: 12px;
-  width: 80px; /* 设置固定宽度，而不是占满父元素 */
-  height: 80px; /* 设置固定高度 */
+  width: 80px;
+  height: 80px;
   background-color: #fff;
   color: #333;
-  display: flex; /* 使用弹性布局 */
-  align-items: center; /* 垂直居中 */
-  justify-content: center; /* 水平居中 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* UV 容器 */
+
 .uv-container {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
-/* UV 危险等级 */
 .uv-level {
   font-size: 24px;
   font-weight: bold;
@@ -956,7 +917,6 @@ export default {
   margin-bottom: 15px;
 }
 
-/* UV 指数可视化条 */
 .uv-meter {
   position: relative;
   height: 20px;
@@ -969,10 +929,10 @@ export default {
   height: 100%;
   width: 100%;
   background: linear-gradient(to right, 
-    #4caf50 0%, /* 低 */
-    #ffeb3b 33%, /* 中等 */
-    #ff9800 66%, /* 高 */
-    #f44336 100% /* 极端 */
+    #4caf50 0%,
+    #ffeb3b 33%,
+    #ff9800 66%,
+    #f44336 100%
   );
 }
 
@@ -997,7 +957,6 @@ export default {
   color: #555;
 }
 
-/* UV指数解释文本 */
 .uv-explanation {
   margin-top: 10px;
   font-size: 14px;
@@ -1009,7 +968,6 @@ export default {
   border-radius: 8px;
 }
 
-/* 防晒霜提醒样式 */
 .sunscreen-reminder {
   margin-top: 25px;
   padding: 15px;
@@ -1037,7 +995,6 @@ export default {
   font-size: 14px;
 }
 
-/* 开关样式 */
 .switch {
   position: relative;
   display: inline-block;
@@ -1124,7 +1081,6 @@ input:checked + .slider:before {
   color: #4a90e2;
 }
 
-/* 温度趋势图样式 */
 .temperature-trend-content {
   display: flex;
   flex-direction: column;
@@ -1194,7 +1150,6 @@ input:checked + .slider:before {
   object-fit: contain;
 }
 
-/* 响应式设计 */
 @media (max-width: 1200px) {
   .content {
     grid-template-columns: 1fr;
@@ -1255,7 +1210,6 @@ input:checked + .slider:before {
   }
 }
 
-/* 选择器和按钮美化 */
 select {
   appearance: none;
   background-color: #fff;
@@ -1313,7 +1267,6 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
 }
 
-/* 搜索框样式 */
 .city-search {
   position: relative;
   width: 100%;

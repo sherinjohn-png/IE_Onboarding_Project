@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const router = express.Router();
 
-const VITE_UV_API_KEY = 'openuv-11cnu4rm879yhg7-io';
+const VITE_UV_API_KEY = 'openuv-54deurm8hyrk4g-io';
 
 router.get('/uv/:lat/:lng', async (req, res) => {
     const { lat, lng } = req.params;
